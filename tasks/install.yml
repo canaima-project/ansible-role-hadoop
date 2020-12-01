@@ -1,71 +1,70 @@
 ---
-- name: test hadoop role
-  hosts: test
-  remote_user: hadoop
+- name: Disable firewalld and stop it
+  systemd:
+    name: firewalld
+    state: stopped
+    enabled: no
   become: true
 
-  tasks:
-  - name: Disable firewalld and stop it
-    systemd:
-      name: firewalld
-      state: stopped
-      enabled: no
+- name: Install java
+  yum:
+    name: java-1.8.0-openjdk-devel
+    state: present
+  become: true
 
-  - name: Install java
-    yum:
-      name: yum install java-1.8.0-openjdk-devel -y
-      state: present
+- name: Download Hadoop 3.3
+  get_url:
+    url: http://mirrors.up.pt/pub/apache/hadoop/common/hadoop-3.3.0/hadoop-3.3.0.tar.gz
+    dest: /home/hadoop
 
-  - name: Download Hadoop 3.1
-    get_url:
-      url: http://mirrors.up.pt/pub/apache/hadoop/common/hadoop-3.3.0/hadoop-3.3.0.tar.gz
-      dest: /home/hadoop
+- name: Unarchive Hadoop tgz
+  unarchive:
+    src: /home/hadoop/hadoop-3.3.0.tar.gz
+    dest: /home/hadoop/
+    remote_src: yes
 
-  - name: Unarchive Hadoop tgz
-    unarchive:
-      src: /home/hadoop/hadoop-3.3.0.tar.gz
-      dest: /home/hadoop/hadoop
-      remote_src: yes
+- name: Rename hadoop folder in a more understandable way
+  shell: mv hadoop-3.3.0 hadoop
 
-  - name: Add Hadoop's environment vars to /home/hadoop/.bashrc
-    lineinfile:
-      dest: /home/hadoop/.bashrc
-      insertafter: EOF
-      line: "{{ item }}"
-    with_items:
-      - export HADOOP_HOME=/home/hadoop/hadoop
-      - export HADOOP_INSTALL=$HADOOP_HOME
-      - export HADOOP_MAPRED_HOME=$HADOOP_HOME
-      - export HADOOP_COMMON_HOME=$HADOOP_HOME
-      - export HADOOP_HDFS_HOME=$HADOOP_HOME
-      - export YARN_HOME=$HADOOP_HOME
-      - export HADOOP_COMMON_LIB_NATIVE_DIR=$HADOOP_HOME/lib/native
-      - export PATH=$PATH:$HADOOP_HOME/sbin:$HADOOP_HOME/bin
-  
-  - name: Source bashrc
-    shell: source /home/hadoop/.bashrc
-  
-  - name: Configure hadoop-env.sh with the correct JAVA_HOME var
-    copy: 
-      src: "{{ role_path }}/files/hadoop-env.sh"
-      dest: /home/hadoop/etc/hadoop/hadoop-env.sh
+- name: Add Hadoop's environment vars to /home/hadoop/.bashrc
+  lineinfile:
+    dest: /home/hadoop/.bashrc
+    insertafter: EOF
+    line: "{{ item }}"
+  with_items:
+    - export HADOOP_HOME=/home/hadoop/hadoop
+    - export HADOOP_INSTALL=$HADOOP_HOME
+    - export HADOOP_MAPRED_HOME=$HADOOP_HOME
+    - export HADOOP_COMMON_HOME=$HADOOP_HOME
+    - export HADOOP_HDFS_HOME=$HADOOP_HOME
+    - export YARN_HOME=$HADOOP_HOME
+    - export HADOOP_COMMON_LIB_NATIVE_DIR=$HADOOP_HOME/lib/native
+    - export PATH=$PATH:$HADOOP_HOME/sbin:$HADOOP_HOME/bin
 
-  - name: Configure hdfs-site.xml
-    copy:
-      src: "{{ role_path }}/files/hdfs-site.xml"
-      dest: /home/hadoop/etc/hadoop/hdfs-site.xml
+- name: Source bashrc
+  shell: source /home/hadoop/.bashrc
 
-  - name: Configure core-site.xml
-    copy:
-      src: "{{ role_path }}/files/core-site.xml"
-      dest: /home/hadoop/etc/hadoop/core-site.xml
+- name: Configure hadoop-env.sh with the correct JAVA_HOME var
+  copy: 
+    src: "{{ role_path }}/files/hadoop-env.sh"
+    dest: /home/hadoop/etc/hadoop/
 
-  - name: Configure yarn-site.xml
-    copy:
-      src: "{{ role_path }}/files/yarn-site.xml"
-      dest: /home/hadoop/etc/hadoop/yarn-site.xml
+- name: Configure hdfs-site.xml
+  copy:
+    src: "{{ role_path }}/files/hdfs-site.xml"
+    dest: /home/hadoop/etc/hadoop/hdfs-site.xml
 
-  - name: Configure mapred-site.xml
-    copy:
-      src: "{{ role_path }}/files/core-site.xml"()
-      dest: /home/hadoop/etc/hadoop/mapred-site.xml
+- name: Configure core-site.xml
+  copy:
+    src: "{{ role_path }}/files/core-site.xml"
+    dest: /home/hadoop/etc/hadoop/core-site.xml
+
+- name: Configure yarn-site.xml
+  copy:
+    src: "{{ role_path }}/files/yarn-site.xml"
+    dest: /home/hadoop/etc/hadoop/yarn-site.xml
+
+- name: Configure mapred-site.xml
+  copy:
+    src: "{{ role_path }}/files/mapred-site.xml"
+    dest: /home/hadoop/etc/hadoop/mapred-site.xml
