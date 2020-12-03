@@ -68,3 +68,35 @@
   copy:
     src: "{{ role_path }}/files/mapred-site.xml"
     dest: /home/hadoop/hadoop/etc/hadoop/mapred-site.xml
+
+### TESTED 1 ###
+
+- name: Configure /etc/hosts on every nodes
+  lineinfile:
+    path: /etc/hosts
+    regexp: '^127.0.1.1'
+    line: "{{ item }}"
+  with_items:
+      - "{{ master_ip }}    {{ master_hostname }}"
+      - "{{ slave1_ip }}    {{ slave1_hostname }}"
+      - "{{ slave2_ip }}    {{ slave2_hostname }}"
+  become: true
+  
+- name: Configure on master /etc/hadoop/workers
+  lineinfile: 
+    path: /home/hadoop/hadoop/etc/hadoop/workers
+    regexp: '^localhost'
+    line: "{{ item }}"
+  with_items:
+    - "{{ master_hostname }}"
+    - "{{ slave1_hostname }}"
+    - "{{ slave2_hostname }}"
+  when: is_hadoop_master
+
+### TESTED 2 ###
+
+- name: Start DFS
+  shell: start-dfs.sh
+
+- name: Start YARN
+  shell: start-yarn.sh
